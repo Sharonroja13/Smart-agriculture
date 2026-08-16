@@ -1,84 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+const express = require('express');
+const router = express.Router();
+const Task = require('../models/Task');
 
-function Tasks() {
-  const [tasks, setTasks] = useState([]);
-  const [title, setTitle] = useState('');
+// Create
+router.post('/', async (req, res) => {
+  const task = await Task.create(req.body);
+  res.json(task);
+});
 
-  // Fetch tasks
-  const fetchTasks = async () => {
-    const res = await axios.get('http://localhost:5000/api/tasks');
-    setTasks(res.data);
-  };
+// Read
+router.get('/', async (req, res) => {
+  const tasks = await Task.find();
+  res.json(tasks);
+});
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+// Delete
+router.delete('/:id', async (req, res) => {
+  await Task.findByIdAndDelete(req.params.id);
+  res.json({ message: "Deleted" });
+});
 
-  // Add task
-  const addTask = async () => {
-    if (!title) return alert("Enter task name");
+// Update task (mark complete)
+router.put('/:id', async (req, res) => {
+  console.log("PUT API HIT");  // 👈 ADD THIS
 
-    await axios.post('http://localhost:5000/api/tasks', {
-      title
-    });
-
-    setTitle('');
-    fetchTasks();
-  };
-
-  // Delete task
-  const deleteTask = async (id) => {
-    await axios.delete(`http://localhost:5000/api/tasks/${id}`);
-    fetchTasks();
-  };
-
-  // Mark as completed
-  const markComplete = async (id) => {
-  try {
-    await axios.put(`http://127.0.0.1:5000/api/tasks/${id}`, {
-      completed: true
-    });
-    fetchTasks();
-  } catch (error) {
-    console.error("ERROR:", error.response?.data);
-  }
-};
-
-  return (
-    <div className="container">
-      <h2>Tasks 📋</h2>
-
-      {/* Add Task */}
-      <input
-        placeholder="Add Task"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
-      <button onClick={addTask}>Add Task</button>
-
-      {/* Task List */}
-      {tasks.map(task => (
-        <div className="crop-card" key={task._id}>
-          <p><b>Title:</b> {task.title}</p>
-
-          <p>
-            <b>Status:</b> {task.completed ? "✅ Completed" : "⏳ Pending"}
-          </p>
-
-          {!task.completed && (
-            <button onClick={() => markComplete(task._id)}>
-              Mark Completed
-            </button>
-          )}
-
-          <button onClick={() => deleteTask(task._id)}>
-            Delete
-          </button>
-        </div>
-      ))}
-    </div>
+  const task = await Task.findByIdAndUpdate(
+    req.params.id,
+    { completed: req.body.completed },
+    { new: true }
   );
-}
+  res.json(task);
+});
 
-export default Tasks;
+module.exports = router;

@@ -1,49 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+const express = require('express');
+const router = express.Router();
+const Crop = require('../models/Crop');
 
-function Crops() {
-  const [crops, setCrops] = useState([]);
-  const [cropName, setCropName] = useState('');
+// CREATE
+router.post('/', async (req, res) => {
+  const crop = await Crop.create(req.body);
+  res.json(crop);
+});
 
-  const fetchCrops = async () => {
-    const res = await axios.get('http://localhost:5000/api/crops');
-    setCrops(res.data);
-  };
+// READ
+router.get('/', async (req, res) => {
+  const crops = await Crop.find();
+  res.json(crops);
+});
 
-  useEffect(() => {
-    fetchCrops();
-  }, []);
+// UPDATE
+router.put('/:id', async (req, res) => {
+  const crop = await Crop.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.json(crop);
+});
 
-  const addCrop = async () => {
-    await axios.post('http://localhost:5000/api/crops', {
-      cropName,
-      waterUsage: 10,
-      healthStatus: "Healthy"
-    });
-    fetchCrops();
-  };
+// DELETE
+router.delete('/:id', async (req, res) => {
+  await Crop.findByIdAndDelete(req.params.id);
+  res.json({ message: "Deleted" });
+});
 
-  const deleteCrop = async (id) => {
-    await axios.delete(`http://localhost:5000/api/crops/${id}`);
-    fetchCrops();
-  };
-
-  return (
-    <div className="container">
-      <h2>Crops 🌾</h2>
-
-      <input placeholder="Add New Crop" onChange={(e) => setCropName(e.target.value)} />
-      <button onClick={addCrop}>Add Crop</button>
-
-      {crops.map(crop => (
-        <div className="crop-card" key={crop._id}>
-          <p>Name: {crop.cropName}</p>
-          <p>Status: {crop.healthStatus}</p>
-          <button onClick={() => deleteCrop(crop._id)}>Delete</button>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export default Crops;
+module.exports = router;
